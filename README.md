@@ -84,6 +84,42 @@ let pr = graph.personalized_pagerank(None, 0.85, 100, 1e-6, Some("importance"));
 - `add_edge(from, to, weight)` - 添加带权重的边
 - `personalized_pagerank(personalization, alpha, max_iter, tolerance)` - 计算 PageRank
 
+#### 设计
+WeightedGraph 使用邻接表存储图结构，每个节点包含一个邻接节点列表和权重列表。
+
+Personalized PageRank 计算过程
+``` mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '10px'}, 'config': {'width': 400, 'height': 300}}}%%
+flowchart TD
+    A[开始] --> B[排序所有节点和边]
+    B --> C[初始化个性化向量]
+    C --> D[归一化个性化向量]
+    D --> E[计算出度权重和]
+    E --> F[初始化PageRank值为均匀分布]
+    F --> G[开始迭代]
+    
+    G --> H{迭代次数\n< max_iter?}
+    H -->|是| I[初始化新PR值为个性化贡献]
+    I --> J[按顺序处理每个源节点]
+    J --> K[获取源节点的PR值和出度权重]
+    K --> L{出度权重>0?}
+    L -->|是| M[排序并处理每条出边]
+    M --> N[计算转移贡献:\nalpha*PR*weight/out_weight]
+    N --> O[累加到目标节点的PR值]
+    L -->|否| P[累计悬挂节点质量]
+    
+    O --> Q[处理下一个源节点]
+    P --> Q
+    Q --> R[所有源节点处理完毕?]
+    R -->|否| J
+    R -->|是| S[按个性化向量分配悬挂质量]
+    S --> T[计算PR值变化量]
+    T --> U{变化量 < tolerance?}
+    U -->|是| V[返回最终PR值]
+    U -->|否| G
+    H -->|否| V
+```
+
 ### MultiDiGraph
 
 #### 主要方法
