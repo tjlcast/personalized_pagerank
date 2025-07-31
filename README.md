@@ -179,6 +179,59 @@ flowchart TD
 cargo test
 ```
 
+## ⚙️ Cargo Feature 使用说明
+
+本项目通过 Cargo feature 开关提供了两种 API 风格，请根据实际需求在 `Cargo.toml` 中启用对应 feature。
+
+| Feature 名称      | 作用                                                              | 默认启用 |
+| ----------------- | ----------------------------------------------------------------- | -------- |
+| **without_ident** | 使用简化版 API，边只携带权重信息，无需额外标识符                  | ✅        |
+| **with_ident**    | 使用完整版 API，边可携带权重 + 自定义标识符（如引用名、边 ID 等） | ❌        |
+
+### 如何启用
+
+#### 1. 使用默认简化版（无需额外配置）
+```toml
+[dependencies]
+personalized_pagerank = "0.1"
+```
+
+#### 2. 使用完整版（带标识符）
+```toml
+[dependencies]
+personalized_pagerank = { version = "0.1", features = ["with_ident"] }
+```
+
+#### 3. 禁用默认 features（高级用法）
+```toml
+[dependencies]
+personalized_pagerank = { version = "0.1", default-features = false, features = ["with_ident"] }
+```
+
+### 代码差异示例
+
+#### 简化版（without_ident）
+```rust
+use personalized_pagerank::pagerank::WeightedGraph;
+
+let mut graph = WeightedGraph::new();
+graph.add_edge("A", "B", 1.5);
+```
+
+#### 完整版（with_ident）
+```rust
+use personalized_pagerank::pagerank1::WeightedGraph;
+
+let mut graph = WeightedGraph::new();
+graph.add_edge("A", "B", 1.5, "reference_to_B".to_string());
+```
+
+### 注意事项
+- 两个 feature 互斥，同时启用会导致编译错误
+- 切换 feature 后需要重新编译项目
+- 测试用例会根据 feature 自动选择对应模块进行测试
+
+
 ## 性能考虑
 
 - 使用邻接表存储图结构，空间效率高
