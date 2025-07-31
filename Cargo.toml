@@ -19,3 +19,6 @@ approx = "0.5"
 [features]
 # 可选：添加并行计算功能
 # parallel = ["rayon"]
+default = ["without_ident"] 
+with_ident = []
+without_ident = []

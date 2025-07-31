@@ -1,5 +1,9 @@
-pub mod pagerank_multi;
-pub mod pagerank_multi1;
-pub mod pagerank;
+#[cfg(feature = "with_ident")]
 pub mod pagerank1;
+#[cfg(feature = "without_ident")]
+pub mod pagerank;
+#[cfg(feature = "with_ident")]
+pub mod pagerank_multi1;
+#[cfg(feature = "without_ident")]
+pub mod pagerank_multi;
 pub mod utils;
