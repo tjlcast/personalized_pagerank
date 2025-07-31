@@ -1,0 +1,2 @@
+pip install networkx numpy scipy
+test_personalization_with_extra_node

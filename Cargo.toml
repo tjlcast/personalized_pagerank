@@ -1,0 +1,20 @@
+[package]
+name = "personalized_pagerank"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# 用于测试中的近似相等断言
+approx = "0.5"
+# 可选：如果需要更高效的哈希算法
+# ahash = "0.8"
+# 可选：如果需要并行计算
+# rayon = "1.8"
+
+[dev-dependencies]
+# 用于测试
+approx = "0.5"
+
+[features]
+# 可选：添加并行计算功能
+# parallel = ["rayon"]
