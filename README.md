@@ -131,6 +131,37 @@ flowchart TD
 - `personalized_pagerank(personalization, alpha, max_iter, tolerance, weight_key)` - 计算 PageRank
   - `weight_key`: 可选，指定使用哪个边属性作为权重
 
+
+#### 设计
+``` mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '10px'}, 'config': {'width': 400, 'height': 300}}}%%
+flowchart TD
+    A[开始] --> B{图是否为空?}
+    B -- 是 --> Z[返回空HashMap]
+    B -- 否 --> C[初始化个性化向量]
+    
+    C --> D[归一化个性化向量]
+    D --> E{总和为0?}
+    E -- 是 --> Z
+    E -- 否 --> F[计算节点出度权重]
+    
+    F --> G[初始化PageRank值为均匀分布]
+    G --> H[开始迭代循环]
+    
+    H --> I[初始化新PageRank值为个性化贡献]
+    I --> J[遍历所有边计算转移贡献]
+    
+    J --> K[处理悬挂节点质量]
+    K --> L[计算新旧PageRank差值]
+    
+    L --> M{差值 < 容忍度?}
+    M -- 是 --> N[输出收敛信息]
+    N --> O[返回最终PageRank]
+    M -- 否 --> P{达到最大迭代次数?}
+    P -- 是 --> O
+    P -- 否 --> H
+```
+
 ## 测试
 
 项目包含全面的单元测试，覆盖以下场景：
