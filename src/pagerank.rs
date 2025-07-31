@@ -6,13 +6,13 @@ use std::hash::Hash;
 pub struct WeightedGraph<T> {
     /// 邻接表表示，存储 (节点, 权重) 对
     adjacency: HashMap<T, Vec<(T, f64)>>,
-    /// 所有节点的集合
+    /// 所有节点的集合，保持插入顺序
     nodes: Vec<T>,
 }
 
 impl<T> WeightedGraph<T>
 where
-    T: Clone + Hash + Eq + std::fmt::Debug,
+    T: Clone + Hash + Eq + std::fmt::Debug + Ord, // 添加 Ord 约束以支持排序
 {
     pub fn new() -> Self {
         Self {
@@ -63,7 +63,7 @@ where
         out_weights
     }
 
-    /// Personalized PageRank 计算
+    /// 确定性的 Personalized PageRank 计算
     ///
     /// # 参数
     /// - `personalization`: 个性化向量，指定哪些节点作为"起始点"及其权重
@@ -82,11 +82,15 @@ where
             return HashMap::new();
         }
 
+        // 确保节点有确定的顺序
+        let mut sorted_nodes = self.nodes.clone();
+        sorted_nodes.sort(); // 关键：排序节点确保确定性
+
         // 初始化个性化向量
         let personalization = personalization.unwrap_or_else(|| {
             // 默认均匀分布
             let uniform_weight = 1.0 / n as f64;
-            self.nodes
+            sorted_nodes
                 .iter()
                 .map(|node| (node.clone(), uniform_weight))
                 .collect()
@@ -103,8 +107,7 @@ where
         let out_weights = self.out_degree_weights();
 
         // 初始化 PageRank 值
-        let mut pagerank: HashMap<T, f64> = self
-            .nodes
+        let mut pagerank: HashMap<T, f64> = sorted_nodes
             .iter()
             .map(|node| (node.clone(), 1.0 / n as f64))
             .collect();
@@ -114,43 +117,47 @@ where
             let mut new_pagerank = HashMap::new();
 
             // 初始化新的 PageRank 值为个性化向量的贡献
-            for node in &self.nodes {
+            for node in &sorted_nodes {
                 let personalization_contrib =
                     (1.0 - alpha) * normalized_personalization.get(node).unwrap_or(&0.0);
                 new_pagerank.insert(node.clone(), personalization_contrib);
             }
 
-            // 计算来自其他节点的贡献
-            for (from_node, edges) in &self.adjacency {
-                let from_pagerank = pagerank.get(from_node).unwrap_or(&0.0);
-                let out_weight = out_weights.get(from_node).unwrap_or(&0.0);
+            // 按确定顺序计算来自其他节点的贡献
+            for from_node in &sorted_nodes {
+                if let Some(edges) = self.adjacency.get(from_node) {
+                    let from_pagerank = pagerank.get(from_node).unwrap_or(&0.0);
+                    let out_weight = out_weights.get(from_node).unwrap_or(&0.0);
 
-                if *out_weight > 0.0 {
-                    for (to_node, edge_weight) in edges {
-                        let contribution = alpha * from_pagerank * (edge_weight / out_weight);
-                        *new_pagerank.entry(to_node.clone()).or_insert(0.0) += contribution;
+                    if *out_weight > 0.0 {
+                        // 对边也进行排序以确保确定性
+                        let mut sorted_edges = edges.clone();
+                        sorted_edges.sort_by(|a, b| a.0.cmp(&b.0));
+
+                        for (to_node, edge_weight) in sorted_edges {
+                            let contribution = alpha * from_pagerank * (edge_weight / out_weight);
+                            *new_pagerank.entry(to_node.clone()).or_insert(0.0) += contribution;
+                        }
                     }
                 }
             }
 
             // 处理悬挂节点（没有出边的节点）
-            let hanging_mass: f64 = self
-                .nodes
+            let hanging_mass: f64 = sorted_nodes
                 .iter()
                 .filter(|node| out_weights.get(node).unwrap_or(&0.0) == &0.0)
                 .map(|node| pagerank.get(node).unwrap_or(&0.0))
                 .sum();
 
             // 将悬挂节点的质量按个性化向量重新分配
-            for node in &self.nodes {
+            for node in &sorted_nodes {
                 let hanging_contrib =
                     alpha * hanging_mass * normalized_personalization.get(node).unwrap_or(&0.0);
                 *new_pagerank.entry(node.clone()).or_insert(0.0) += hanging_contrib;
             }
 
             // 检查收敛
-            let diff: f64 = self
-                .nodes
+            let diff: f64 = sorted_nodes
                 .iter()
                 .map(|node| {
                     let old_val = pagerank.get(node).unwrap_or(&0.0);
@@ -169,39 +176,11 @@ where
         pagerank
     }
 }
-
-/// 打印并排序 HashMap 的内容（按 value 降序排列）
-///
-/// # 参数
-/// * `map` - 要打印和排序的 HashMap
-/// * `title` - 可选的标题，用于在打印结果前显示
-///
-/// # 泛型约束
-/// * `K: Debug + Eq + std::hash::Hash + Copy` - 键类型必须可调试、可比较、可哈希且可复制
-/// * `V: Debug + PartialOrd` - 值类型必须可调试且可比较
-pub fn print_sorted_map<K, V>(map: &HashMap<K, V>, title: Option<&str>)
-where
-    K: Debug + Eq + std::hash::Hash + Copy,
-    V: Debug + PartialOrd,
-{
-    // 如果有标题，先打印标题
-    if let Some(t) = title {
-        println!("{}", t);
-    }
-
-    // 将 map 转换为元组数组并排序
-    let mut sorted_items: Vec<_> = map.iter().collect();
-    sorted_items.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    // 打印排序后的结果
-    for (key, value) in sorted_items {
-        println!("{:?}: {:?}", key, value);
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
+
+    use crate::utils::print_sorted_map;
 
     use super::*;
 
@@ -288,7 +267,7 @@ mod tests {
         println!("result: {:?}", result);
 
         assert!(b_rank > a_rank);
-        assert!(a_rank > c_rank);
+        assert!(b_rank > c_rank);
     }
 
     #[test]
@@ -310,14 +289,20 @@ mod tests {
         personalization.insert("D", 0.1);
 
         let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
+        print_sorted_map(&result, None);
 
         // A 应该有最高的 PageRank 值
-        // let a_rank = result.get("A").unwrap();
-        // let b_rank = result.get("B").unwrap();
-        // let c_rank = result.get("C").unwrap();
-        // let d_rank = result.get("D").unwrap();
+        let a_rank = result.get("A").unwrap();
+        let b_rank = result.get("B").unwrap();
+        let c_rank = result.get("C").unwrap();
+        let d_rank = result.get("D").unwrap();
 
-        println!("result: {:?}", result);
+        assert!(a_rank > b_rank);
+        assert!(a_rank > c_rank);
+        assert!(a_rank > d_rank);
+
+        assert!(d_rank > c_rank);
+        assert!(d_rank > b_rank);
     }
 
     #[test]
@@ -340,14 +325,20 @@ mod tests {
         personalization.insert("D", 0.1);
 
         let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
+        print_sorted_map(&result, None);
 
         // A 应该有最高的 PageRank 值
-        // let a_rank = result.get("A").unwrap();
-        // let b_rank = result.get("B").unwrap();
-        // let c_rank = result.get("C").unwrap();
-        // let c_rank = result.get("D").unwrap();
+        let a_rank = result.get("A").unwrap();
+        let b_rank = result.get("B").unwrap();
+        let c_rank = result.get("C").unwrap();
+        let d_rank = result.get("D").unwrap();
 
-        println!("result: {:?}", result);
+        assert!(a_rank > b_rank);
+        assert!(a_rank > c_rank);
+        assert!(a_rank > d_rank);
+
+        assert!(c_rank > b_rank);
+        assert!(c_rank > d_rank);
     }
 
     // >>>>>>>> basic >>>>>>>
@@ -377,7 +368,7 @@ mod tests {
         // C is a dangling node with no outgoing links
 
         let result = graph.personalized_pagerank(None, 0.85, 100, 1e-6);
-        println!("result: {:?}", result);
+        print_sorted_map(&result, Some("test_dangling_node:"));
 
         // C should still have some rank from incoming link
         assert!(result.get("C").unwrap() > &0.0);
@@ -396,7 +387,7 @@ mod tests {
         graph.add_edge("D", "C", 1.0);
 
         let result = graph.personalized_pagerank(None, 0.85, 100, 1e-6);
-        println!("result: {:?}", result);
+        print_sorted_map(&result, Some("test_disconnected_components:"));
 
         // Within each component, ranks should be equal
         assert_relative_eq!(
@@ -424,7 +415,7 @@ mod tests {
         personalization.insert("B", 1.0); // 100% preference for B
 
         let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
-        println!("result: {:?}", result);
+        print_sorted_map(&result, Some("test_strong_personalization:"));
 
         // B should have the highest rank
         assert!(result.get("B").unwrap() > result.get("A").unwrap());
@@ -444,8 +435,7 @@ mod tests {
 
         let result: HashMap<&'static str, f64> =
             graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
-        println!("result: {:?}", result);
-        print_sorted_map(&result, Some("Original result:"));
+        print_sorted_map(&result, Some("test_personalization_with_missing_node:"));
 
         // C should still have some rank (from teleportation)
         assert!(result.get("C").unwrap() > &0.0);
@@ -466,7 +456,7 @@ mod tests {
         personalization.insert("C", 0.2); // C not in graph
 
         let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
-        println!("result: {:?}", result);
+        print_sorted_map(&result, Some("test_personalization_with_extra_node:"));
 
         // Should ignore C in personalization
         assert!(result.get("A").unwrap() > result.get("B").unwrap());

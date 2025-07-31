@@ -10,6 +10,7 @@ approx = "0.5"
 # ahash = "0.8"
 # 可选：如果需要并行计算
 # rayon = "1.8"
+petgraph = "0.6"
 
 [dev-dependencies]
 # 用于测试

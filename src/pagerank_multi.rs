@@ -477,8 +477,8 @@ mod tests {
 
         // 添加边
         let edge1 = graph.add_edge("A", "B", 1.0);
-        let edge2 = graph.add_edge("A", "B", 2.0); // 多重边
-        let edge3 = graph.add_edge("B", "C", 1.5);
+        let _edge2 = graph.add_edge("A", "B", 2.0); // 多重边
+        let _edge3 = graph.add_edge("B", "C", 1.5);
 
         assert_eq!(graph.node_count(), 3);
         assert_eq!(graph.edge_count(), 3);
@@ -531,7 +531,7 @@ mod tests {
         attrs.insert("type".to_string(), "important".to_string());
         attrs.insert("custom_weight".to_string(), "5.0".to_string());
 
-        let edge_id = graph.add_edge_with_attributes("A", "B", 1.0, attrs);
+        let _edge_id = graph.add_edge_with_attributes("A", "B", 1.0, attrs);
 
         // 使用自定义权重属性进行PageRank计算
         let pr = graph.personalized_pagerank(None, 0.85, 100, 1e-6, Some("custom_weight"));
@@ -539,70 +539,10 @@ mod tests {
     }
 }
 
-// 使用示例
-fn main() {
-    let mut graph = MultiDiGraph::new();
-
-    // 添加节点
-    graph.add_node("页面A");
-    graph.add_node("页面B");
-    graph.add_node("页面C");
-    graph.add_node("页面D");
-
-    // 添加多重边（模拟多个链接）
-    graph.add_edge("页面A", "页面B", 1.0);
-    graph.add_edge("页面A", "页面B", 0.5); // 第二个链接，权重较小
-    graph.add_edge("页面A", "页面C", 2.0);
-    graph.add_edge("页面B", "页面C", 1.0);
-    graph.add_edge("页面B", "页面D", 1.5);
-    graph.add_edge("页面C", "页面A", 1.0);
-    graph.add_edge("页面C", "页面D", 1.0);
-    graph.add_edge("页面D", "页面A", 0.5);
-
-    // 打印图信息
-    graph.print_info();
-
-    // 计算标准PageRank
-    println!("\n=== 标准PageRank ===");
-    let standard_pr = graph.personalized_pagerank(None, 0.85, 100, 1e-6, None);
-    for (node, score) in &standard_pr {
-        println!("{}: {:.4}", node, score);
-    }
-
-    // 计算个性化PageRank（偏向页面A和页面C）
-    println!("\n=== 个性化PageRank (偏向页面A和页面C) ===");
-    let mut personalization = HashMap::new();
-    personalization.insert("页面A", 0.7);
-    personalization.insert("页面B", 0.1);
-    personalization.insert("页面C", 0.2);
-    personalization.insert("页面D", 0.0);
-
-    let personalized_pr = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6, None);
-
-    for (node, score) in &personalized_pr {
-        println!("{}: {:.4}", node, score);
-    }
-
-    // 使用边属性作为权重
-    println!("\n=== 使用边属性权重的示例 ===");
-    let mut graph2 = MultiDiGraph::new();
-
-    let mut attrs1 = HashMap::new();
-    attrs1.insert("importance".to_string(), "3.0".to_string());
-    graph2.add_edge_with_attributes("X", "Y", 1.0, attrs1);
-
-    let mut attrs2 = HashMap::new();
-    attrs2.insert("importance".to_string(), "1.0".to_string());
-    graph2.add_edge_with_attributes("Y", "X", 1.0, attrs2);
-
-    let attr_pr = graph2.personalized_pagerank(None, 0.85, 100, 1e-6, Some("importance"));
-    for (node, score) in &attr_pr {
-        println!("{}: {:.4}", node, score);
-    }
-}
-
 #[cfg(test)]
 mod tests1 {
+    use crate::utils::print_sorted_map;
+
     use super::*;
     use std::collections::HashMap;
 
@@ -757,5 +697,76 @@ mod tests1 {
 
         let sum: f64 = pr.values().sum();
         assert!(approx_eq(sum, 1.0, 1e-6)); // 最终的 PageRank 应该归一化到 1
+    }
+
+    #[test]
+    fn test_normal_pagerank1() {
+        let mut graph = MultiDiGraph::new();
+
+        graph.add_edge("B", "A", 1.0);
+        graph.add_edge("C", "A", 1.0);
+        graph.add_edge("D", "A", 1.0);
+
+        graph.add_edge("B", "C", 1.0);
+        graph.add_edge("C", "D", 1.0);
+        graph.add_edge("D", "C", 1.0);
+
+        // 个性化向量：更偏向节点 A
+        let mut personalization = HashMap::new();
+        personalization.insert("A", 0.1);
+        personalization.insert("B", 0.1);
+        personalization.insert("C", 0.1);
+        personalization.insert("D", 0.1);
+
+        let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6, None);
+        print_sorted_map(&result, None);
+
+        // A 应该有最高的 PageRank 值
+        let a_rank = result.get("A").unwrap();
+        let b_rank = result.get("B").unwrap();
+        let c_rank = result.get("C").unwrap();
+        let d_rank = result.get("D").unwrap();
+
+        assert!(a_rank > b_rank);
+        assert!(a_rank > c_rank);
+        assert!(a_rank > d_rank);
+
+        assert!(c_rank > b_rank);
+        assert!(c_rank > d_rank);
+    }
+
+    #[test]
+    fn test_normal_pagerank2() {
+        let mut graph = MultiDiGraph::new();
+
+        graph.add_edge("B", "A", 1.0);
+        graph.add_edge("C", "A", 1.0);
+        graph.add_edge("D", "A", 1.0);
+
+        graph.add_edge("B", "C", 1.0);
+        graph.add_edge("C", "D", 1.0);
+
+        // 个性化向量：更偏向节点 A
+        let mut personalization = HashMap::new();
+        personalization.insert("A", 0.1);
+        personalization.insert("B", 0.1);
+        personalization.insert("C", 0.1);
+        personalization.insert("D", 0.1);
+
+        let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6, None);
+        print_sorted_map(&result, None);
+
+        // A 应该有最高的 PageRank 值
+        let a_rank = result.get("A").unwrap();
+        let b_rank = result.get("B").unwrap();
+        let c_rank = result.get("C").unwrap();
+        let d_rank = result.get("D").unwrap();
+
+        assert!(a_rank > b_rank);
+        assert!(a_rank > c_rank);
+        assert!(a_rank > d_rank);
+
+        assert!(d_rank > c_rank);
+        assert!(d_rank > b_rank);
     }
 }

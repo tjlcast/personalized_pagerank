@@ -44,7 +44,6 @@ def test_personalization_with_extra_node():
     print("result:", result)
 
 
-
 def test_personalized_pagerank():
     # 创建一个 MultiDiGraph，并添加边: A -> B -> C -> A
     G = nx.MultiDiGraph()
@@ -62,7 +61,8 @@ def test_personalized_pagerank():
             G_simple.add_edge(u, v, weight=w)
 
     # 默认 PageRank
-    pr1 = nx.pagerank(G_simple, alpha=0.85, max_iter=100, tol=1e-6, weight='weight')
+    pr1 = nx.pagerank(G_simple, alpha=0.85, max_iter=100,
+                      tol=1e-6, weight='weight')
     print("默认PageRank:", pr1)
 
     # 个性化 PageRank，偏向 A
@@ -71,7 +71,8 @@ def test_personalized_pagerank():
         "B": 0.0,
         "C": 0.0
     }
-    pr2 = nx.pagerank(G_simple, alpha=0.85, personalization=personalization, max_iter=100, tol=1e-6, weight='weight')
+    pr2 = nx.pagerank(G_simple, alpha=0.85, personalization=personalization,
+                      max_iter=100, tol=1e-6, weight='weight')
     print("个性化PageRank (偏向A):", pr2)
 
     # A 应该有最高的 PageRank 值
@@ -79,8 +80,37 @@ def test_personalized_pagerank():
     assert pr2["A"] > pr2["C"]
 
 
-
 def test_normal_pagerank1():
+    G = nx.DiGraph()
+
+    # 添加边
+    G.add_edge("B", "A", weight=1.0)
+    G.add_edge("C", "A", weight=1.0)
+    G.add_edge("D", "A", weight=1.0)
+
+    G.add_edge("B", "C", weight=1.0)
+    G.add_edge("C", "D", weight=1.0)
+    G.add_edge("D", "C", weight=1.0)
+
+    # 个性化向量
+    personalization = {
+        "A": 0.1,
+        "B": 0.1,
+        "C": 0.1,
+        "D": 0.1
+    }
+
+    # 使用 personalized PageRank
+    result = nx.pagerank(G, alpha=0.85, personalization=personalization,
+                         max_iter=100, tol=1e-6, weight="weight")
+
+    # 输出各节点的 rank
+    result = dict(sorted(result.items(), key=lambda x: x[1], reverse=True))
+    print("test_normal_pagerank1 result:", result)
+
+
+
+def test_normal_pagerank2():
     G = nx.DiGraph()
 
     # 添加边
@@ -100,15 +130,40 @@ def test_normal_pagerank1():
     }
 
     # 使用 personalized PageRank
-    result = nx.pagerank(G, alpha=0.85, personalization=personalization, max_iter=100, tol=1e-6, weight="weight")
+    result = nx.pagerank(G, alpha=0.85, personalization=personalization,
+                         max_iter=100, tol=1e-6, weight="weight")
 
     # 输出各节点的 rank
-    print("result:", result)
+    result = dict(sorted(result.items(), key=lambda x: x[1], reverse=True))
+    print("test_normal_pagerank2 result:", result)
 
- 
+
+def test_normal_pagerank3():
+    G = nx.DiGraph()
+
+    # 添加边
+    G.add_edge("A", "B", weight=1.0)
+    G.add_edge("B", "C", weight=1.0)
+    G.add_edge("C", "A", weight=1.0)
+
+    # 个性化向量
+    personalization = {
+        "B": 0.1,
+    }
+
+    # 使用 personalized PageRank
+    result = nx.pagerank(G, alpha=0.85, personalization=personalization,
+                         max_iter=100, tol=1e-6, weight="weight")
+
+    # 输出各节点的 rank
+    result = dict(sorted(result.items(), key=lambda x: x[1], reverse=True))
+    print("test_normal_pagerank3 result:", result)
+
 
 if __name__ == "__main__":
     test_personalization_with_missing_node()
     test_personalization_with_extra_node()
     test_personalized_pagerank()
     test_normal_pagerank1()
+    test_normal_pagerank2()
+    test_normal_pagerank3()
