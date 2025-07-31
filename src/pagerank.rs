@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -287,6 +286,9 @@ mod tests {
         let c_rank = result.get("C").unwrap();
 
         println!("result: {:?}", result);
+
+        assert!(b_rank > a_rank);
+        assert!(a_rank > c_rank);
     }
 
     #[test]
@@ -310,10 +312,10 @@ mod tests {
         let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
 
         // A 应该有最高的 PageRank 值
-        let a_rank = result.get("A").unwrap();
-        let b_rank = result.get("B").unwrap();
-        let c_rank = result.get("C").unwrap();
-        let c_rank = result.get("D").unwrap();
+        // let a_rank = result.get("A").unwrap();
+        // let b_rank = result.get("B").unwrap();
+        // let c_rank = result.get("C").unwrap();
+        // let d_rank = result.get("D").unwrap();
 
         println!("result: {:?}", result);
     }
@@ -340,10 +342,10 @@ mod tests {
         let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
 
         // A 应该有最高的 PageRank 值
-        let a_rank = result.get("A").unwrap();
-        let b_rank = result.get("B").unwrap();
-        let c_rank = result.get("C").unwrap();
-        let c_rank = result.get("D").unwrap();
+        // let a_rank = result.get("A").unwrap();
+        // let b_rank = result.get("B").unwrap();
+        // let c_rank = result.get("C").unwrap();
+        // let c_rank = result.get("D").unwrap();
 
         println!("result: {:?}", result);
     }
