@@ -458,4 +458,42 @@ mod tests {
         assert!(c_rank > b_rank);
         assert!(c_rank > d_rank);
     }
+
+    #[test]
+    fn test_cycle_pagerank() {
+        let mut graph = WeightedGraph::new();
+
+        graph.add_edge("B", "A", 1.0, "B-A".to_string());
+        graph.add_edge("C", "A", 1.0, "C-A".to_string());
+        graph.add_edge("D", "A", 1.0, "D-A".to_string());
+
+        graph.add_edge("B", "C", 1.0, "B-C".to_string());
+        graph.add_edge("C", "D", 1.0, "C-D".to_string());
+
+        graph.add_edge("E", "E", 1.0, "E-E".to_string());
+
+        // 个性化向量：更偏向节点 A
+        let mut personalization = HashMap::new();
+        personalization.insert("A", 0.1);
+        personalization.insert("B", 0.1);
+        personalization.insert("C", 0.1);
+        personalization.insert("D", 0.1);
+        personalization.insert("E", 0.1);
+
+        let result = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6);
+        print_sorted_map(&result, None);
+
+        // A 应该有最高的 PageRank 值
+        let a_rank = result.get("A").unwrap();
+        let b_rank = result.get("B").unwrap();
+        let c_rank = result.get("C").unwrap();
+        let d_rank = result.get("D").unwrap();
+        let e_rank = result.get("E").unwrap();
+
+        assert!(e_rank > a_rank);
+        assert!(a_rank > d_rank);
+        assert!(d_rank > c_rank);
+
+        assert!(c_rank > b_rank);
+    }
 }

@@ -160,6 +160,36 @@ def test_normal_pagerank3():
     print("test_normal_pagerank3 result:", result)
 
 
+def test_cycle_pagerank1():
+    G = nx.DiGraph()
+
+    # 添加边
+    G.add_edge("B", "A", weight=1.0)
+    G.add_edge("C", "A", weight=1.0)
+    G.add_edge("D", "A", weight=1.0)
+
+    G.add_edge("B", "C", weight=1.0)
+    G.add_edge("C", "D", weight=1.0)
+
+    G.add_edge("E", "E", weight=1.0)
+
+    # 个性化向量
+    personalization = {
+        "A": 0.1,
+        "B": 0.1,
+        "C": 0.1,
+        "D": 0.1,
+        "E": 0.1
+    }
+
+    # 使用 personalized PageRank
+    result = nx.pagerank(G, alpha=0.85, personalization=personalization,
+                         max_iter=100, tol=1e-6, weight="weight")
+
+    # 输出各节点的 rank
+    result = dict(sorted(result.items(), key=lambda x: x[1], reverse=True))
+    print("test_cycle_pagerank1 result:", result)
+
 if __name__ == "__main__":
     test_personalization_with_missing_node()
     test_personalization_with_extra_node()
@@ -167,3 +197,4 @@ if __name__ == "__main__":
     test_normal_pagerank1()
     test_normal_pagerank2()
     test_normal_pagerank3()
+    test_cycle_pagerank1()
