@@ -596,6 +596,25 @@ mod tests {
 
     use super::*;
 
+    /// 节点存在且有出边
+    #[test]
+    fn test_get_out_edges_some() {
+        let mut graph = MultiDiGraph::new();
+        let src = "A";
+        graph.add_edge(src, "B", 1.0, "edge_ab".to_string());
+        graph.add_edge(src, "C", 2.0, "edge_ac".to_string());
+        graph.add_edge(src, "D", 3.0, "edge_ad".to_string());
+
+        let edges = graph.get_out_edges(&"A").unwrap();
+        println!("get_out_edges: {:?}", edges);
+
+        let out_edges_1 = graph.out_edges(&src, true);
+        println!("out_edges_1: {:?}", out_edges_1);
+
+        let out_edges_2 = graph.out_edges(&src, false);
+        println!("out_edges_2: {:?}", out_edges_2);
+    }
+
     #[test]
     fn test_add_edge_with_ident() {
         let mut graph: MultiDiGraph<&str, String> = MultiDiGraph::new();
@@ -805,7 +824,6 @@ mod tests {
         assert!(d_rank > c_rank);
         assert!(d_rank > b_rank);
     }
-
 
     #[test]
     fn test_cycle_pagerank() {
