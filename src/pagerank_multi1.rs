@@ -608,15 +608,27 @@ mod tests {
         graph.add_edge(src, "B", 1.0, "edge_ab".to_string());
         graph.add_edge(src, "C", 2.0, "edge_ac".to_string());
         graph.add_edge(src, "D", 3.0, "edge_ad".to_string());
+        graph.add_edge(src, "A", 3.0, "edge_aa".to_string());
 
         let edges = graph.get_out_edges(&"A").unwrap();
         println!("get_out_edges: {:?}", edges);
+        for edge in edges {
+            println!("Edge: {:?}", edge);
+        }
 
         let out_edges_1 = graph.out_edges(&src, true);
         println!("out_edges_1: {:?}", out_edges_1);
+        for edge in out_edges_1 {
+            if let OutEdgeResult::WithData(src_rel_fname, dist_rel_fname, data) = edge {
+                println!("Edge from {:?} to {:?}: weight={}, ident={}", src_rel_fname, dist_rel_fname, data.weight, data.ident);
+            }
+        }
 
         let out_edges_2 = graph.out_edges(&src, false);
         println!("out_edges_2: {:?}", out_edges_2);
+
+        // 断言 get_out_edges 的结果
+        assert_eq!(edges.len(), 4, "Should have 4 outgoing edges from A");
     }
 
     #[test]
