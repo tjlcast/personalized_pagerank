@@ -612,17 +612,45 @@ mod tests {
 
         let edges = graph.get_out_edges(&"A").unwrap();
         println!("get_out_edges: {:?}", edges);
+        let mut check_result = Vec::new();
         for edge in edges {
-            println!("Edge: {:?}", edge);
+            println!(
+                "to: {:?} weight: {:?} id: {:?} ident: {:?}",
+                edge.to, edge.weight, edge.id, edge.ident
+            );
+            check_result.push((edge.to, edge.weight, edge.id, edge.ident.clone()));
         }
+        assert_eq!(
+            check_result,
+            vec![
+                ("B", 1.0 as f64, 0 as usize, "edge_ab".to_string()),
+                ("C", 2.0 as f64, 1 as usize, "edge_ac".to_string()),
+                ("D", 3.0 as f64, 2 as usize, "edge_ad".to_string()),
+                ("A", 3.0 as f64, 3 as usize, "edge_aa".to_string()),
+            ]
+        );
 
         let out_edges_1 = graph.out_edges(&src, true);
         println!("out_edges_1: {:?}", out_edges_1);
+        let mut check_result_1 = Vec::new();
         for edge in out_edges_1 {
             if let OutEdgeResult::WithData(src_rel_fname, dist_rel_fname, data) = edge {
-                println!("Edge from {:?} to {:?}: weight={}, ident={}", src_rel_fname, dist_rel_fname, data.weight, data.ident);
+                println!(
+                    "Edge from {:?} to {:?}: weight={}, ident={}",
+                    src_rel_fname, dist_rel_fname, data.weight, data.ident
+                );
+                check_result_1.push((src_rel_fname, dist_rel_fname, data.weight, data.ident));
             }
         }
+        assert_eq!(
+            check_result_1,
+            vec![
+                (&"A", &"B", 1.0 as f64, "edge_ab".to_string()),
+                (&"A", &"C", 2.0 as f64, "edge_ac".to_string()),
+                (&"A", &"D", 3.0 as f64, "edge_ad".to_string()),
+                (&"A", &"A", 3.0 as f64, "edge_aa".to_string())
+            ]
+        );
 
         let out_edges_2 = graph.out_edges(&src, false);
         println!("out_edges_2: {:?}", out_edges_2);
