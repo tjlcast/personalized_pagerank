@@ -96,12 +96,20 @@ where
                 .collect()
         });
 
-        // 归一化个性化向量
         let total_personalization: f64 = personalization.values().sum();
-        let normalized_personalization: HashMap<T, f64> = personalization
-            .iter()
-            .map(|(k, v)| (k.clone(), v / total_personalization))
-            .collect();
+        // 归一化个性化向量
+        let normalized_personalization: HashMap<T, f64> = if total_personalization != 0.0 {
+            personalization
+                .iter()
+                .map(|(k, v)| (k.clone(), v / total_personalization))
+                .collect()
+        } else {
+            let uniform_weight = 1.0 / n as f64;
+            self.nodes
+                .iter()
+                .map(|node| (node.clone(), uniform_weight))
+                .collect()
+        };
 
         // 计算出度权重
         let out_weights = self.out_degree_weights();

@@ -318,16 +318,20 @@ where
                 .collect()
         });
 
-        // 归一化个性化向量
         let total_personalization: f64 = personalization.values().sum();
-        if total_personalization == 0.0 {
-            return HashMap::new();
-        }
-
-        let normalized_personalization: HashMap<T, f64> = personalization
-            .iter()
-            .map(|(k, v)| (k.clone(), v / total_personalization))
-            .collect();
+        // 归一化个性化向量
+        let normalized_personalization: HashMap<T, f64> = if total_personalization != 0.0 {
+            personalization
+                .iter()
+                .map(|(k, v)| (k.clone(), v / total_personalization))
+                .collect()
+        } else {
+            let uniform_weight = 1.0 / n as f64;
+            self.nodes
+                .iter()
+                .map(|node| (node.clone(), uniform_weight))
+                .collect()
+        };
 
         // 计算出度权重（支持使用边属性作为权重）
         let out_weights = if let Some(key) = weight_key {
@@ -668,7 +672,7 @@ mod tests1 {
         let personalization = HashMap::from([("A", 0.0), ("B", 0.0)]);
         let pr = graph.personalized_pagerank(Some(personalization), 0.85, 100, 1e-6, None);
 
-        assert!(pr.is_empty()); // 全为0无法归一化
+        assert!(!pr.is_empty()); // 全为0的时候自动使用均匀分布进行归一化
     }
 
     #[test]
