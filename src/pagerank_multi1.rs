@@ -535,6 +535,27 @@ where
             );
         }
     }
+
+    /// 以表格形式输出所有出边信息
+    pub fn print_all_out_edges_table(&self) {
+        println!("{:<10} {:<10} {:<10} {:<15} {:<10}", "From", "To", "Weight", "Ident", "ID");
+        println!("{}", "-".repeat(60));
+        
+        for node in &self.nodes {
+            if let Some(edges) = self.adjacency.get(node) {
+                for edge in edges {
+                    println!(
+                        "{:<10?} {:<10?} {:<10.2} {:<15?} {:<10}",
+                        node,
+                        edge.to,
+                        edge.weight,
+                        edge.ident,
+                        edge.id
+                    );
+                }
+            }
+        }
+    }
 }
 
 impl<T, I> Default for MultiDiGraph<T, I>
@@ -973,5 +994,8 @@ mod tests {
         assert!(d_rank > c_rank);
 
         assert!(c_rank > b_rank);
+
+        graph.print_info();
+        graph.print_all_out_edges_table();
     }
 }
