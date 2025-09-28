@@ -203,7 +203,7 @@ where
     }
 
     /// 获取所有边的迭代器
-    pub fn edges(&self, data: bool) -> Vec<EdgeResult<T, I>> {
+    pub fn edges(&self, data: bool) -> Vec<EdgeResult<'_, T, I>> {
         let mut result = Vec::new();
         for (src, edges) in &self.adjacency {
             for edge in edges {
@@ -538,19 +538,18 @@ where
 
     /// 以表格形式输出所有出边信息
     pub fn print_all_out_edges_table(&self) {
-        println!("{:<10} {:<10} {:<10} {:<15} {:<10}", "From", "To", "Weight", "Ident", "ID");
+        println!(
+            "{:<10} {:<10} {:<10} {:<15} {:<10}",
+            "From", "To", "Weight", "Ident", "ID"
+        );
         println!("{}", "-".repeat(60));
-        
+
         for node in &self.nodes {
             if let Some(edges) = self.adjacency.get(node) {
                 for edge in edges {
                     println!(
                         "{:<10?} {:<10?} {:<10.2} {:<15?} {:<10}",
-                        node,
-                        edge.to,
-                        edge.weight,
-                        edge.ident,
-                        edge.id
+                        node, edge.to, edge.weight, edge.ident, edge.id
                     );
                 }
             }
