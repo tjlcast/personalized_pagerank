@@ -7,3 +7,4 @@ pub mod pagerank_multi1;
 #[cfg(feature = "without_ident")]
 pub mod pagerank_multi;
 pub mod utils;
+pub mod leidenalg;
